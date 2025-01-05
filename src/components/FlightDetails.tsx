@@ -1,16 +1,4 @@
 import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Typography,
-  Box,
-  Grid,
-  CircularProgress,
-  Divider,
-  Chip,
-  IconButton,
-} from "@mui/material";
 import axios from "axios";
 
 interface FlightDetailsProps {
@@ -35,6 +23,10 @@ const FlightDetails: React.FC<FlightDetailsProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [details, setDetails] = useState<any>(null);
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
+
+  const envApi = import.meta.env.VITE_API;
 
   const formattedLegs = legs.map((leg: any) => ({
     origin: leg.origin.displayCode,
@@ -42,213 +34,226 @@ const FlightDetails: React.FC<FlightDetailsProps> = ({
     date: leg.date,
   }));
 
-  const envApi = import.meta.env.VITE_API;
-
-  const fetchFlightDetails = async () => {
-    try {
-      const response = await axios.get(
-        "https://sky-scrapper.p.rapidapi.com/api/v1/flights/getFlightDetails",
-        {
-          params: {
-            itineraryId,
-            legs: JSON.stringify(formattedLegs),
-            sessionId,
-            adults: 1,
-            currency: "USD",
-            locale: "en-US",
-            market: "en-US",
-            countryCode: "US",
-          },
-          headers: {
-            "x-rapidapi-key": envApi,
-            "x-rapidapi-host": "sky-scrapper.p.rapidapi.com",
-          },
-        }
-      );
-
-      if (response.data.status) {
-        if (response.data.data.pollingCompleted) {
-          const bookingSessionId = response.data.data.bookingSessionId;
-
-          const detailsResponse = await axios.get(
-            "https://sky-scrapper.p.rapidapi.com/api/v1/flights/getBookingDetails",
-            {
-              params: { bookingSessionId },
-              headers: {
-                "x-rapidapi-key": "",
-                "x-rapidapi-host": "sky-scrapper.p.rapidapi.com",
-              },
-            }
-          );
-
-          if (detailsResponse.data.status && detailsResponse.data.data) {
-            setDetails(detailsResponse.data.data);
-            setError("");
-          } else {
-            setError("Unable to fetch detailed flight information.");
-          }
-        }
-      } else {
-        setError("Unable to fetch flight details");
-      }
-    } catch (err) {
-      setError("Error loading flight details");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (open) {
-      setLoading(true);
-      setError("");
+    const fetchFlightDetails = async () => {
+      if (abortController) {
+        abortController.abort();
+      }
+
+      const controller = new AbortController();
+      setAbortController(controller);
+
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await axios.get(
+          "https://sky-scrapper.p.rapidapi.com/api/v1/flights/getFlightDetails",
+          {
+            params: {
+              itineraryId,
+              legs: JSON.stringify(formattedLegs),
+              sessionId,
+              adults: 1,
+              currency: "USD",
+              locale: "en-US",
+              market: "en-US",
+              countryCode: "US",
+            },
+            headers: {
+              "x-rapidapi-key": envApi,
+              "x-rapidapi-host": "sky-scrapper.p.rapidapi.com",
+            },
+            signal: controller.signal,
+          }
+        );
+
+        if (response.data.status && response.data.data) {
+          setDetails(response.data.data);
+        } else {
+          throw new Error("Unable to fetch flight details");
+        }
+      } catch (err) {
+        if (!axios.isCancel(err)) {
+          setError(
+            err instanceof Error ? err.message : "Error loading flight details"
+          );
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (open && itineraryId && sessionId) {
       fetchFlightDetails();
     }
-  }, [open, itineraryId, legs, sessionId]);
+
+    return () => {
+      if (abortController) {
+        abortController.abort();
+      }
+    };
+  }, [open, itineraryId, legs, sessionId, envApi]);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          Flight Details
-          <IconButton onClick={onClose}>X</IconButton>
-        </Box>
-      </DialogTitle>
-      <DialogContent>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : error ? (
-          <Typography color="error">{error}</Typography>
-        ) : details ? (
-          <Box>
-            {details.legs?.map((leg: any, index: number) => (
-              <Box key={index} mb={3}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Typography variant="h6" gutterBottom>
-                      {leg.origin} → {leg.destination}
-                    </Typography>
-                  </Grid>
+    <div
+      className={`fixed inset-0 ${
+        open ? "flex" : "hidden"
+      } items-center justify-center z-50`}
+    >
+      <div className="fixed inset-0 bg-black/30" onClick={onClose}></div>
 
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2">Departure</Typography>
-                    <Typography variant="body1">{leg.departure}</Typography>
-                    <Typography variant="caption">
-                      {leg.originAirport}
-                    </Typography>
-                  </Grid>
+      <div className="bg-white w-full max-w-2xl rounded-lg shadow-xl relative z-10 m-4">
+        {/* Header with Destination Image */}
+        <div className="relative">
+          {details?.itinerary?.destinationImage && (
+            <div className="h-48 w-full relative rounded-t-lg overflow-hidden">
+              <img
+                src={details.itinerary.destinationImage}
+                alt="Destination"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            </div>
+          )}
 
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2">Arrival</Typography>
-                    <Typography variant="body1">{leg.arrival}</Typography>
-                    <Typography variant="caption">
-                      {leg.destinationAirport}
-                    </Typography>
-                  </Grid>
+          <div className="absolute top-0 right-0 p-4">
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-black/10 rounded-full text-white"
+            >
+              <span className="sr-only">Close</span>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
 
-                  <Grid item xs={12}>
-                    <Box my={1}>
-                      <Divider />
-                    </Box>
-                  </Grid>
+        {/* Content */}
+        <div className="p-4">
+          {loading ? (
+            <div className="flex justify-center items-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+          ) : error ? (
+            <div className="text-red-500 p-4">{error}</div>
+          ) : details?.itinerary ? (
+            <div className="space-y-6">
+              {details.itinerary.legs.map((leg: any, index: number) => (
+                <div key={index} className="space-y-4">
+                  {/* Flight Route */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-lg font-bold">
+                        {leg.origin.displayCode}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {leg.origin.city}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center px-4">
+                      <div className="text-sm text-gray-500">
+                        {Math.floor(leg.duration / 60)}h {leg.duration % 60}m
+                      </div>
+                      <div className="border-t w-24 my-2"></div>
+                      {leg.stopCount > 0 ? (
+                        <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                          {leg.stopCount}{" "}
+                          {leg.stopCount === 1 ? "stop" : "stops"}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-500">Direct</span>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold">
+                        {leg.destination.displayCode}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {leg.destination.city}
+                      </div>
+                    </div>
+                  </div>
 
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle2">Flight Duration</Typography>
-                    <Typography>
-                      {Math.floor(leg.durationInMinutes / 60)}h{" "}
-                      {leg.durationInMinutes % 60}m
-                    </Typography>
-                  </Grid>
+                  {/* Times */}
+                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                    <div>
+                      <div className="text-sm text-gray-500">Departure</div>
+                      <div className="font-medium">
+                        {new Date(leg.departure).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {new Date(leg.departure).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-gray-500">Arrival</div>
+                      <div className="font-medium">
+                        {new Date(leg.arrival).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {new Date(leg.arrival).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
 
-                  {leg.carriers?.marketing?.map((carrier: any, idx: number) => (
-                    <Grid item xs={12} key={idx}>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <img
-                          src={carrier.logoUrl}
-                          alt={carrier.name}
-                          width={24}
-                          height={24}
-                        />
-                        <Typography>
-                          {carrier.name} - Flight {carrier.flightNumber}
-                        </Typography>
-                      </Box>
-                    </Grid>
+                  {/* Carrier Info */}
+                  {leg.segments.map((segment: any, segIndex: number) => (
+                    <div
+                      key={segIndex}
+                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                    >
+                      <img
+                        src={segment.marketingCarrier.logo}
+                        alt={segment.marketingCarrier.name}
+                        className="w-8 h-8 object-contain"
+                      />
+                      <div>
+                        <div className="font-medium">
+                          {segment.marketingCarrier.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Flight {segment.flightNumber}
+                        </div>
+                      </div>
+                    </div>
                   ))}
+                </div>
+              ))}
 
-                  {leg.stopCount > 0 && (
-                    <Grid item xs={12}>
-                      <Chip
-                        label={`${leg.stopCount} ${
-                          leg.stopCount === 1 ? "stop" : "stops"
-                        }`}
-                        color="primary"
-                        variant="outlined"
-                      />
-                    </Grid>
-                  )}
-                </Grid>
-                {index < details.legs.length - 1 && (
-                  <Box my={2}>
-                    <Divider />
-                  </Box>
-                )}
-              </Box>
-            ))}
-
-            <Box mt={2}>
-              <Typography variant="h6" gutterBottom>
-                Price Details
-              </Typography>
-              <Typography variant="h5" color="primary">
-                {details.price?.formatted}
-              </Typography>
-              {details.farePolicy && (
-                <Box mt={2}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Fare Policy
-                  </Typography>
-                  <Grid container spacing={1}>
-                    <Grid item xs={12}>
-                      <Chip
-                        label={
-                          details.farePolicy.isChangeAllowed
-                            ? "Changes Allowed"
-                            : "No Changes"
-                        }
-                        color={
-                          details.farePolicy.isChangeAllowed
-                            ? "success"
-                            : "error"
-                        }
-                        size="small"
-                        sx={{ mr: 1, mb: 1 }}
-                      />
-                      <Chip
-                        label={
-                          details.farePolicy.isCancellationAllowed
-                            ? "Cancellation Allowed"
-                            : "No Cancellation"
-                        }
-                        color={
-                          details.farePolicy.isCancellationAllowed
-                            ? "success"
-                            : "error"
-                        }
-                        size="small"
-                        sx={{ mr: 1, mb: 1 }}
-                      />
-                    </Grid>
-                  </Grid>
-                </Box>
+              {/* Price */}
+              {details.itinerary.pricingOptions?.[0] && (
+                <div className="mt-6 pt-6 border-t">
+                  <div className="text-lg font-semibold mb-2">
+                    Price Details
+                  </div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    ${details.itinerary.pricingOptions[0].totalPrice}
+                  </div>
+                </div>
               )}
-            </Box>
-          </Box>
-        ) : null}
-      </DialogContent>
-    </Dialog>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
   );
 };
 

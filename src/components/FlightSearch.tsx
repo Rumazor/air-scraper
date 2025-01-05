@@ -41,10 +41,8 @@ const FlightSearch: React.FC = () => {
   const [flights, setFlights] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-
   const [selectedFlight, setSelectedFlight] = useState<any>(null);
   const [sessionId, setSessionId] = useState<string>("");
-
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [openDropdown, setOpenDropdown] = useState<
@@ -127,12 +125,12 @@ const FlightSearch: React.FC = () => {
   };
 
   return (
-    <div className="p-2 min-h-screen">
-      <img src="/hero.svg" className="w-full max-w-2xl mx-auto" alt="" />
-      <h1 className="text-3xl text-center font-medium mb-6 text-gray-800">
+    <div className="p-2  font-sans min-h-screen">
+      <img src="/hero.svg" className="w-full   max-w-2xl mx-auto" alt="" />
+      <h1 className="text-6xl text-center font-medium mb-6 text-gray-800">
         Flights
       </h1>
-      <div className="bg-gray-50 shadow-lg p-6 relative rounded-lg">
+      <div className="bg-gray-100 max-w-6xl w-full mx-auto shadow-lg p-6 relative rounded-lg">
         <div
           className="flex justify-center md:justify-start gap-4 mb-4"
           ref={dropdownRef}
