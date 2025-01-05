@@ -15,7 +15,7 @@ import {
   FaSuitcase,
   FaSearch,
 } from "react-icons/fa";
-import { getCabinClassLabel } from "../utils/flight";
+import { getCabinClassLabel, getSortLabel } from "../utils/flight";
 
 const FlightSearch: React.FC = () => {
   const [flightDetails, setFlightDetails] = useState({
@@ -118,27 +118,6 @@ const FlightSearch: React.FC = () => {
       originOptions: options.destinationOptions,
       destinationOptions: options.originOptions,
     }));
-  };
-
-  const getSortLabel = (sortBy: SortBy): string => {
-    switch (sortBy) {
-      case "best":
-        return "Best";
-      case "price_high":
-        return "Cheapest";
-      case "fastest":
-        return "Fastest";
-      case "outbound_take_off_time":
-        return "Departure (outbound)";
-      case "outbound_landing_time":
-        return "Arrival (outbound)";
-      case "return_take_off_time":
-        return "Departure (return)";
-      case "return_landing_time":
-        return "Arrival (return)";
-      default:
-        return "Best";
-    }
   };
 
   const passengerSummary = () => {
