@@ -155,7 +155,7 @@ const FlightSearch: React.FC = () => {
         key="search-container"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: loading ? 0.5 : 0 }}
+        transition={{ duration: 0.5, delay: loading ? 0.5 : 1 }}
         className="bg-gray-100 max-w-6xl w-full mx-auto shadow-lg p-6 relative rounded-lg"
       >
         <div
