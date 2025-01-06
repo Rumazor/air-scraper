@@ -8,7 +8,6 @@ const api = axios.create({
     "x-rapidapi-host": "sky-scrapper.p.rapidapi.com",
   },
 });
-console.log(envApi);
 export interface Airport {
   skyId: string;
   entityId: string;
@@ -104,7 +103,7 @@ export const searchFlights = async (
         currency: params.currency || "USD",
         market: params.market || "en-US",
         countryCode: params.countryCode || "US",
-        limit: 1,
+        limit: 10,
       },
     });
     return response.data;

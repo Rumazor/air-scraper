@@ -15,14 +15,14 @@ export default function FlightList({
   setSelectedFlight,
 }: Props) {
   return (
-    <div>
+    <div className="">
       {flights.length > 0 && (
-        <div className="mt-8">
+        <div className="mt-8  w-full max-w-6xl mx-auto ">
           <h2 className="text-xl font-semibold mb-4">
             Available Flights ({flights.length})
           </h2>
 
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 w-full max-w-6xl mx-auto gap-4">
             <AnimatePresence>
               {flights.map((flight: any, index: number) => (
                 <motion.div

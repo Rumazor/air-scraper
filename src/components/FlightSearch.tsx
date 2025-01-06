@@ -1,3 +1,5 @@
+// FlightSearch.tsx
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   searchAirports,
@@ -14,8 +16,10 @@ import {
   FaUsers,
   FaSuitcase,
   FaSearch,
+  FaExclamationCircle,
 } from "react-icons/fa";
 import { getCabinClassLabel, getSortLabel } from "../utils/flight";
+import { motion, AnimatePresence } from "framer-motion";
 
 const FlightSearch: React.FC = () => {
   const [flightDetails, setFlightDetails] = useState({
@@ -48,6 +52,8 @@ const FlightSearch: React.FC = () => {
   const [openDropdown, setOpenDropdown] = useState<
     null | "sort" | "passengers" | "class"
   >(null);
+
+  const [hasSearched, setHasSearched] = useState<boolean>(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -88,6 +94,7 @@ const FlightSearch: React.FC = () => {
   };
 
   const handleSearchFlightsWrapper = async () => {
+    setHasSearched(true);
     await handleSearchFlights({
       flightDetails,
       setError,
@@ -125,12 +132,32 @@ const FlightSearch: React.FC = () => {
   };
 
   return (
-    <div className="p-2  font-sans min-h-screen">
-      <img src="/hero.svg" className="w-full   max-w-2xl mx-auto" alt="" />
-      <h1 className="text-6xl text-center font-medium mb-6 text-gray-800">
-        Flights
-      </h1>
-      <div className="bg-gray-100 max-w-6xl w-full mx-auto shadow-lg p-6 relative rounded-lg">
+    <div className="p-2 font-sans min-h-screen">
+      <AnimatePresence>
+        {!loading && !hasSearched && (
+          <motion.div
+            key="hero"
+            initial={{ opacity: 1, height: "auto" }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 1 }}
+            className="overflow-hidden"
+          >
+            <img src="/hero.svg" className="w-full max-w-2xl mx-auto" alt="" />
+            <h1 className="text-6xl text-center font-medium mt-4 mb-6 text-gray-800">
+              Flights
+            </h1>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.div
+        key="search-container"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: loading ? 0.5 : 0 }}
+        className="bg-gray-100 max-w-6xl w-full mx-auto shadow-lg p-6 relative rounded-lg"
+      >
         <div
           className="flex justify-center md:justify-start gap-4 mb-4"
           ref={dropdownRef}
@@ -150,7 +177,14 @@ const FlightSearch: React.FC = () => {
             </button>
 
             {openDropdown === "sort" && (
-              <div className="absolute z-50 bg-white border border-gray-300 rounded-lg mt-2 right-0 w-40 text-sm">
+              <motion.div
+                key="sort-dropdown"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="absolute z-50 bg-white border border-gray-300 rounded-lg mt-2 right-0 w-40 text-sm"
+              >
                 <ul className="flex flex-col">
                   <li>
                     <button
@@ -275,11 +309,10 @@ const FlightSearch: React.FC = () => {
                     </button>
                   </li>
                 </ul>
-              </div>
+              </motion.div>
             )}
           </div>
 
-          {/* Button: Passengers */}
           <div className="relative">
             <button
               type="button"
@@ -295,8 +328,14 @@ const FlightSearch: React.FC = () => {
             </button>
 
             {openDropdown === "passengers" && (
-              <div className="absolute z-50 bg-white border border-gray-300 rounded-lg mt-2 right-0 w-54 text-sm">
-                {/* ADULTS */}
+              <motion.div
+                key="passengers-dropdown"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="absolute z-50 bg-white border border-gray-300 rounded-lg mt-2 right-0 w-54 text-sm"
+              >
                 <div className="flex items-center justify-between p-2">
                   <span className="text-sm font-medium text-gray-700 mr-2">
                     Adults
@@ -331,7 +370,6 @@ const FlightSearch: React.FC = () => {
                   </div>
                 </div>
 
-                {/* CHILDREN */}
                 <div className="flex items-center justify-between p-2 border-t border-gray-100">
                   <span className="text-sm font-medium text-gray-700 mr-3">
                     Children
@@ -366,7 +404,6 @@ const FlightSearch: React.FC = () => {
                   </div>
                 </div>
 
-                {/* INFANTS */}
                 <div className="flex items-center justify-between p-2 border-t border-gray-100">
                   <span className="text-sm font-medium text-gray-700">
                     Infants
@@ -400,11 +437,10 @@ const FlightSearch: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
           </div>
 
-          {/* Button: Class */}
           <div className="relative">
             <button
               type="button"
@@ -420,7 +456,14 @@ const FlightSearch: React.FC = () => {
             </button>
 
             {openDropdown === "class" && (
-              <div className="absolute z-50 bg-white border border-gray-300 rounded-lg mt-2 right-0 w-40 text-sm">
+              <motion.div
+                key="class-dropdown"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="absolute z-50 bg-white border border-gray-300 rounded-lg mt-2 right-0 w-40 text-sm"
+              >
                 <ul className="flex flex-col">
                   {(
                     [
@@ -456,14 +499,12 @@ const FlightSearch: React.FC = () => {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </motion.div>
             )}
           </div>
         </div>
 
-        {/* ORIGIN & DESTINATION */}
         <div className="grid grid-cols-1 md:grid-cols-[1fr,auto,1fr,auto] items-center gap-2">
-          {/* Origin Input */}
           <div className="flex flex-col">
             <label className="text-sm font-semibold text-gray-700 mb-2">
               Origin
@@ -481,7 +522,14 @@ const FlightSearch: React.FC = () => {
                 required
               />
               {options.originOptions.length > 0 && (
-                <ul className="absolute bg-white border border-gray-200 rounded-lg w-full mt-1 max-h-60 overflow-auto shadow-lg z-50">
+                <motion.ul
+                  key="origin-options"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute bg-white border border-gray-200 rounded-lg w-full mt-1 max-h-60 overflow-auto shadow-lg z-50"
+                >
                   {options.originOptions.map((option) => (
                     <li
                       key={option.skyId}
@@ -501,7 +549,7 @@ const FlightSearch: React.FC = () => {
                       {option.title} ({option.subtitle})
                     </li>
                   ))}
-                </ul>
+                </motion.ul>
               )}
             </div>
             <span className="text-xs text-gray-500 mt-1">
@@ -511,7 +559,6 @@ const FlightSearch: React.FC = () => {
             </span>
           </div>
 
-          {/* Swap Button */}
           <div className="flex justify-center">
             <button
               type="button"
@@ -523,7 +570,6 @@ const FlightSearch: React.FC = () => {
             </button>
           </div>
 
-          {/* Destination Input */}
           <div className="flex flex-col">
             <label className="text-sm font-semibold text-gray-700 mb-2">
               Destination
@@ -541,7 +587,14 @@ const FlightSearch: React.FC = () => {
                 required
               />
               {options.destinationOptions.length > 0 && (
-                <ul className="absolute bg-white border border-gray-200 rounded-lg w-full mt-1 max-h-60 overflow-auto shadow-lg z-50">
+                <motion.ul
+                  key="destination-options"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute bg-white border border-gray-200 rounded-lg w-full mt-1 max-h-60 overflow-auto shadow-lg z-50"
+                >
                   {options.destinationOptions.map((option) => (
                     <li
                       key={option.skyId}
@@ -561,7 +614,7 @@ const FlightSearch: React.FC = () => {
                       {option.title} ({option.subtitle})
                     </li>
                   ))}
-                </ul>
+                </motion.ul>
               )}
             </div>
             <span className="text-xs text-gray-500 mt-1">
@@ -571,7 +624,6 @@ const FlightSearch: React.FC = () => {
             </span>
           </div>
 
-          {/* Date Input */}
           <div className="flex flex-col">
             <label className="text-sm font-semibold text-gray-700 mb-2">
               Dates
@@ -593,8 +645,7 @@ const FlightSearch: React.FC = () => {
           </div>
         </div>
 
-        {/* SEARCH BUTTON */}
-        <div className="mt-6 md:mt-10">
+        <div className="mt-6 md:mt-10 relative">
           <button
             onClick={handleSearchFlightsWrapper}
             disabled={
@@ -603,14 +654,14 @@ const FlightSearch: React.FC = () => {
               !flightDetails.destination ||
               !flightDetails.date
             }
-            className={`w-full md:w-auto absolute translate-x-2/4 right-2/4 ${
+            className={`w-full absolute translate-x-2/4 right-2/4 scale-110 md:w-auto ${
               loading ||
               !flightDetails.origin ||
               !flightDetails.destination ||
               !flightDetails.date
                 ? "bg-blue-300 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-700"
-            } text-white font-semibold py-2 px-4 rounded-3xl shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            } text-white font-semibold py-2 px-4 rounded-3xl shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300`}
           >
             {loading ? (
               <div className="flex items-center justify-center">
@@ -644,18 +695,44 @@ const FlightSearch: React.FC = () => {
             )}
           </button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* ERROR MESSAGE */}
-      {error && <p className="text-red-500 mt-4 text-sm">{error}</p>}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            key="error-message"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-center mt-10 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative  max-w-6xl mx-auto"
+            role="alert"
+          >
+            <FaExclamationCircle className="mr-2" />
+            <span className="block sm:inline">{error}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* FLIGHT LIST */}
-      <FlightList
-        flights={flights}
-        selectedFlight={selectedFlight}
-        sessionId={sessionId}
-        setSelectedFlight={setSelectedFlight}
-      />
+      <AnimatePresence>
+        {flights.length > 0 && !loading && (
+          <motion.div
+            key="flight-list"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.5 }}
+            className="mt-8"
+          >
+            <FlightList
+              flights={flights}
+              selectedFlight={selectedFlight}
+              sessionId={sessionId}
+              setSelectedFlight={setSelectedFlight}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
