@@ -144,9 +144,14 @@ const FlightSearch: React.FC = () => {
             className="overflow-hidden"
           >
             <img src="/hero.svg" className="w-full max-w-2xl mx-auto" alt="" />
-            <h1 className="text-6xl text-center font-medium mt-4 mb-6 text-gray-800">
+            <motion.h1
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 1 }}
+              className="text-6xl text-center font-medium mt-4 mb-6 text-gray-800"
+            >
               Flights
-            </h1>
+            </motion.h1>
           </motion.div>
         )}
       </AnimatePresence>
